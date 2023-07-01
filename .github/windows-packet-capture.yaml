@@ -1,0 +1,40 @@
+# This Actions workflow sample performs a packet capture on a Windows runners using pktmon and converts the results to a pcap file.
+name: Packet Capture Workflow
+
+# Trigger only on workflow_dispatch or push to main
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  capture:
+    # windows-latest, you can specify other Windows runners as necessary
+    runs-on: windows-latest
+
+    steps:
+      # Start the packet capture using pktmon to capture all traffic
+      - name: Start Packet Capture
+        run: pktmon start --etw --file capture.etl
+
+      # Run the steps / tests you want to capture traffic for in between "Start Packet Capture" and "Stop Packet Capture" steps
+
+      # EXAMPLE:, e.g. get response headers from github.com with curl
+      - name: Send curl request to github.com
+        run: curl -I https://github.com
+
+      # Stop the packet capture and upload the results
+      - name: Stop Packet Capture
+        run: pktmon stop
+
+      # Convert the packet capture to a pcap file
+      - name: Convert Packet Capture
+        run: pktmon etl2pcap capture.etl --out capture.pcap
+
+      # Upload the packet capture as an artifact, you can download it from the Actions tab and open it e.g. in Wireshark
+      - name: Upload Packet Capture
+        uses: actions/upload-artifact@v2
+        with:
+          name: capture.pcap
+          path: capture.pcap
